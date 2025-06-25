@@ -338,7 +338,7 @@ setup_automation() {
     <array>
         <dict>
             <key>Hour</key>
-            <integer>9</integer>
+            <integer>7</integer>
             <key>Minute</key>
             <integer>0</integer>
         </dict>
@@ -360,14 +360,14 @@ EOF
     launchctl unload "$plist_file" 2>/dev/null || true
     launchctl load "$plist_file"
     
-    log "SUCCESS" "Automation configured for 9:00 AM and 5:00 PM daily"
+    log "SUCCESS" "Automation configured for 7:00 AM and 5:00 PM daily"
 }
 
 # Automated execution
 run_automation() {
     local hour=$(date +%H)
     
-    if [[ "$hour" == "09" ]]; then
+    if [[ "$hour" == "07" ]]; then
         # Morning: Create journal
         if [[ ! -f "$JOURNAL_FILE" ]]; then
             generate_journal_template
@@ -435,7 +435,7 @@ ${YELLOW}COMMANDS:${NC}
   ${GREEN}complete${NC}            Mark Slack update as complete
   ${GREEN}add <section> <text>${NC} Add timestamped entry to section
   ${GREEN}analytics${NC}           Show journal analytics
-  ${GREEN}setup${NC}               Setup automation (9 AM & 5 PM)
+  ${GREEN}setup${NC}               Setup automation (7 AM & 5 PM)
   ${GREEN}auto${NC}                Run automated tasks (used by scheduler)
   ${GREEN}cleanup [days]${NC}      Clean up old files (default: 30 days)
   ${GREEN}help${NC}                Show this help

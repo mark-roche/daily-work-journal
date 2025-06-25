@@ -21,7 +21,7 @@ An intelligent, unified daily journaling system with comprehensive automation, a
 ## 🎯 Core Features
 
 ### ⏰ **Intelligent Automation**
-- **Morning creation** (9 AM): Auto-generates daily journal
+- **Morning creation** (7 AM): Auto-generates daily journal
 - **Evening updates** (5 PM): Populates Slack context automatically
 - **Smart scheduling:** Adapts to your work hours and availability
 - **Failure recovery:** Robust error handling and retry logic
@@ -140,7 +140,7 @@ The v2.0 template is **50% more concise** while maintaining full functionality:
 ## 🤖 Automation Details
 
 ### **Scheduled Tasks**
-- **9:00 AM:** Auto-create daily journal if not exists
+- **7:00 AM:** Auto-create daily journal if not exists
 - **5:00 PM:** Update Slack context and prepare evening review
 
 ### **Smart Features**
@@ -154,7 +154,7 @@ The v2.0 template is **50% more concise** while maintaining full functionality:
 <key>StartCalendarInterval</key>
 <array>
     <dict>
-        <key>Hour</key><integer>9</integer>
+        <key>Hour</key><integer>7</integer>
         <key>Minute</key><integer>0</integer>
     </dict>
     <dict>
