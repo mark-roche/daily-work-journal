@@ -1,0 +1,51 @@
+# Daily Work Journal - Git Ignore
+
+# Sensitive logs and personal data
+logs/*.md
+logs/.timestamps.log
+logs/.update-history.log
+logs/.daily-timeline-*.md
+logs/slack-automation.log
+logs/slack-automation-error.log
+logs/journal-automation.log
+logs/journal-automation-error.log
+
+# Temporary files
+*.tmp
+*.backup
+*.bak
+/tmp/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Node modules (if any)
+node_modules/
+
+# Python cache (if any)
+__pycache__/
+*.pyc
+*.pyo
+
+# Log files
+*.log
+
+# Personal environment files
+.env
+.env.local
+
+# Backup files
+*.backup.* 

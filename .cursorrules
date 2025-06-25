@@ -1,0 +1,45 @@
+# Cursor Rules for Daily Work Journal System
+
+## Project Context
+This is a comprehensive daily work journal system that captures:
+- Cursor IDE activity and development work
+- Slack team communications and context
+- Daily todos, achievements, and reflections
+- Learning and insights from daily work
+
+## File Organization
+- `scripts/` - Executable shell scripts for journal generation
+- `config/` - Configuration files (LaunchAgent plist)
+- `logs/` - Daily journal markdown files (moved from ~/doc/journal/)
+
+## Journal Structure
+Each daily journal includes:
+- Todos (carried over from previous day)
+- Cursor activity (files modified, git commits, projects)
+- Slack context (team communications, feedback, action items)
+- Meetings and collaboration notes
+- Learning and insights
+- Challenges and blockers
+- Achievements and wins
+- Reflection and planning for tomorrow
+
+## Integration Points
+- **Cursor Activity**: Automatically pulls from cursor-logging system
+- **Slack MCP**: Provides guided commands to populate team context
+- **Git Integration**: Captures commits and repository changes
+- **Daily Automation**: Runs at 9 AM via macOS LaunchAgent
+
+## Usage Patterns
+- Journal auto-generates each morning at 9 AM
+- Use Slack MCP commands to populate team context
+- Update throughout the day with activities and insights
+- Review and plan for tomorrow at end of day
+- Carry over incomplete todos to next day's journal
+
+## Slack MCP Integration
+The system provides specific MCP commands to run in Cursor:
+- Get my messages from today
+- Search for project mentions
+- Check team feedback on tools
+- Look for action items and follow-ups
+- Monitor current status and reminders
