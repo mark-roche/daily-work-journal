@@ -1,7 +1,11 @@
 # Daily Work Journal - Git Ignore
 
-# Sensitive logs and personal data
+# ==================== PERSONAL DATA ====================
+# All personal journal files and activity logs
+logs/
+logs/*
 logs/*.md
+logs/.activity.log
 logs/.timestamps.log
 logs/.update-history.log
 logs/.daily-timeline-*.md
@@ -9,13 +13,17 @@ logs/slack-automation.log
 logs/slack-automation-error.log
 logs/journal-automation.log
 logs/journal-automation-error.log
+logs/automation.log
+logs/automation.error
 
-# Temporary files
+# ==================== TEMPORARY FILES ====================
 *.tmp
 *.backup
 *.bak
 /tmp/
+.temp/
 
+# ==================== SYSTEM FILES ====================
 # macOS
 .DS_Store
 .DS_Store?
@@ -25,13 +33,23 @@ logs/journal-automation-error.log
 ehthumbs.db
 Thumbs.db
 
-# Editor files
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ==================== EDITOR FILES ====================
 .vscode/
 .cursor/
 *.swp
 *.swo
 *~
+.idea/
 
+# ==================== DEVELOPMENT ====================
 # Node modules (if any)
 node_modules/
 
@@ -39,13 +57,36 @@ node_modules/
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
 
-# Log files
+# ==================== LOGS & SENSITIVE DATA ====================
+# All log files
 *.log
+*.log.*
 
 # Personal environment files
 .env
 .env.local
+.env.production
+.env.staging
 
 # Backup files
-*.backup.* 
+*.backup.*
+backup-*.log
+
+# ==================== PERSONAL WORKSPACE ====================
+# Any personal notes or drafts
+PERSONAL_*
+personal_*
+draft_*
+DRAFT_*
+notes_*
+NOTES_*
+
+# Test files with personal data
+test_journal_*.md
+TEST_* 
