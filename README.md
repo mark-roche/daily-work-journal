@@ -1,6 +1,6 @@
-# �� Daily Work Journal v2.0
+# 📝 Daily Work Journal v2.1
 
-An intelligent, unified daily journaling system with comprehensive automation, analytics, and seamless Slack integration.
+An intelligent, unified daily journaling system with comprehensive automation, analytics, and seamless **Slack & Google Calendar integration**.
 
 ## 🚀 What's New in v2.0
 

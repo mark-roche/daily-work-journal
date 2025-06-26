@@ -1,7 +1,7 @@
 #!/bin/bash
-# 📝 Daily Work Journal - Unified Management System
-# A comprehensive, intelligent daily journaling system with timestamp tracking and automation
-# Version 2.0 - Refactored and optimized
+# 📝 Daily Work Journal - Unified Management System with Calendar Integration
+# A comprehensive, intelligent daily journaling system with timestamp tracking, Slack, and Google Calendar automation
+# Version 2.1 - Enhanced with Google Calendar integration
 
 set -euo pipefail
 
@@ -12,9 +12,10 @@ readonly JOURNAL_DIR="$PROJECT_DIR/logs"
 readonly CONFIG_DIR="$PROJECT_DIR/config"
 readonly TODAY=$(date +%Y-%m-%d)
 readonly YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d "yesterday" +%Y-%m-%d)
+readonly TOMORROW=$(date -v+1d +%Y-%m-%d 2>/dev/null || date -d "tomorrow" +%Y-%m-%d)
 readonly JOURNAL_FILE="$JOURNAL_DIR/$TODAY.md"
 readonly TIMESTAMP_LOG="$JOURNAL_DIR/.activity.log"
-readonly VERSION="2.0.0"
+readonly VERSION="2.1.0"
 
 # Colors for output
 readonly RED='\033[0;31m'
@@ -62,7 +63,7 @@ init_directories() {
 
 # ==================== JOURNAL TEMPLATE SYSTEM ====================
 
-# Streamlined, focused journal template
+# Enhanced journal template with calendar integration
 generate_journal_template() {
     local cursor_activity=""
     local yesterday_todos=""
@@ -89,6 +90,19 @@ generate_journal_template() {
 **Today's Mission:** 
 **Current Status:** 🟡 In Progress
 **Energy Level:** ⚡⚡⚡⚡⚪ (4/5)
+
+---
+
+## 📅 Calendar & Schedule
+
+### Today's Events
+*Run: \`./journal.sh calendar\` to populate*
+
+### Key Meetings
+- 
+
+### Time Blocks
+- 
 
 ---
 
@@ -166,6 +180,89 @@ EOF
     log "SUCCESS" "Journal created: $JOURNAL_FILE"
 }
 
+# ==================== GOOGLE CALENDAR INTEGRATION ====================
+
+# Update calendar context in journal
+update_calendar_context() {
+    log "INFO" "Updating calendar context..."
+    
+    local user_status="🟡 Pending"
+    local instructions=""
+    local current_hour=$(date +%H)
+    
+    # Check if user is likely available (heuristic)
+    if [[ $current_hour -ge 9 && $current_hour -le 18 ]]; then
+        user_status="🟢 Ready"
+        instructions="**Action:** Open Cursor and run MCP commands below"
+    else
+        user_status="🟡 Queued"
+        instructions="**Action:** Will auto-run during work hours (9-18)"
+    fi
+    
+    # Replace the Calendar & Schedule section
+    if [[ -f "$JOURNAL_FILE" ]]; then
+        local temp_file=$(mktemp)
+        
+        # Create the replacement section in a temporary file first
+        cat > "${temp_file}.section" << EOF
+
+## 📅 Calendar & Schedule
+
+### 🤖 Calendar Auto-Update
+**Status:** $user_status | **Updated:** $(date '+%H:%M')
+$instructions
+
+### 📱 MCP Commands (Copy to Cursor)
+\`\`\`
+1. mcp_gworkspace_calendar_events time_min="$TODAY" time_max="$TOMORROW"
+2. mcp_gworkspace_calendar_availability email_list=["your-email@shopify.com"]
+3. mcp_gworkspace_list_calendars
+\`\`\`
+
+### Today's Events
+*Results will appear here after running MCP commands*
+
+### Key Meetings
+- 
+
+### Time Blocks
+- 
+
+### Availability Gaps
+- 
+EOF
+        
+        # Use awk to replace the section
+        awk '
+        /^## 📅 Calendar & Schedule/ {
+            system("cat '"${temp_file}.section"'")
+            skip = 1
+            next
+        }
+        /^## / && skip {
+            skip = 0
+        }
+        !skip { print }
+        ' "$JOURNAL_FILE" > "$temp_file"
+        
+        mv "$temp_file" "$JOURNAL_FILE"
+        rm -f "${temp_file}.section"
+        log "SUCCESS" "Calendar context updated"
+    else
+        error_exit "Journal file not found: $JOURNAL_FILE"
+    fi
+}
+
+# Mark calendar update as complete
+mark_calendar_complete() {
+    if [[ -f "$JOURNAL_FILE" ]]; then
+        sed -i.bak 's/🟡 Pending\|🟡 Queued/🟢 Completed/' "$JOURNAL_FILE"
+        sed -i.bak 's/🟢 Ready/🟢 Completed/' "$JOURNAL_FILE"
+        rm -f "$JOURNAL_FILE.bak"
+        log "SUCCESS" "Calendar update marked as completed"
+    fi
+}
+
 # ==================== SLACK INTEGRATION ====================
 
 # Intelligent Slack context gathering
@@ -184,7 +281,12 @@ update_slack_context() {
         instructions="**Action:** Will auto-run during work hours (9-18)"
     fi
     
-    local slack_section=$(cat << EOF
+    # Replace the Team & Communication section
+    if [[ -f "$JOURNAL_FILE" ]]; then
+        local temp_file=$(mktemp)
+        
+        # Create the replacement section in a temporary file first
+        cat > "${temp_file}.section" << EOF
 
 ## 💬 Team & Communication
 
@@ -209,14 +311,11 @@ $instructions
 ### Decisions Made
 - 
 EOF
-)
-    
-    # Replace the Team & Communication section
-    if [[ -f "$JOURNAL_FILE" ]]; then
-        local temp_file=$(mktemp)
-        awk -v section="$slack_section" '
+        
+        # Use awk to replace the section
+        awk '
         /^## 💬 Team & Communication/ {
-            print section
+            system("cat '"${temp_file}.section"'")
             skip = 1
             next
         }
@@ -227,6 +326,7 @@ EOF
         ' "$JOURNAL_FILE" > "$temp_file"
         
         mv "$temp_file" "$JOURNAL_FILE"
+        rm -f "${temp_file}.section"
         log "SUCCESS" "Slack context updated"
     else
         error_exit "Journal file not found: $JOURNAL_FILE"
@@ -241,6 +341,24 @@ mark_slack_complete() {
         rm -f "$JOURNAL_FILE.bak"
         log "SUCCESS" "Slack update marked as completed"
     fi
+}
+
+# ==================== INTEGRATED AUTOMATION ====================
+
+# Update both Slack and Calendar contexts
+update_all_contexts() {
+    log "INFO" "Updating all integrations (Slack + Calendar)..."
+    update_calendar_context
+    update_slack_context
+    log "SUCCESS" "All contexts updated - ready for MCP commands"
+}
+
+# Mark all integrations as complete
+mark_all_complete() {
+    log "INFO" "Marking all integrations as complete..."
+    mark_calendar_complete
+    mark_slack_complete
+    log "SUCCESS" "All integrations marked as completed"
 }
 
 # ==================== TIMESTAMP & ANALYTICS ====================
@@ -295,11 +413,15 @@ show_analytics() {
         local completed=$(grep -c "^- \[x\]" "$JOURNAL_FILE" 2>/dev/null || echo "0")
         local pending=$(grep -c "^- \[ \]" "$JOURNAL_FILE" 2>/dev/null || echo "0")
         local timestamps=$(grep -o '\[[0-9][0-9]:[0-9][0-9]\]' "$JOURNAL_FILE" 2>/dev/null | wc -l || echo "0")
+        local calendar_status=$(grep "Calendar Auto-Update" -A1 "$JOURNAL_FILE" | grep Status | sed 's/.*Status: \([^|]*\).*/\1/' | tr -d ' ' || echo "N/A")
+        local slack_status=$(grep "Slack Auto-Update" -A1 "$JOURNAL_FILE" | grep Status | sed 's/.*Status: \([^|]*\).*/\1/' | tr -d ' ' || echo "N/A")
         
         echo "📝 Content: $lines lines"
         echo "✅ Completed: $completed tasks"
         echo "⏳ Pending: $pending tasks"
         echo "🕒 Timestamped entries: $timestamps"
+        echo "📅 Calendar status: $calendar_status"
+        echo "💬 Slack status: $slack_status"
         echo ""
         
         echo "🕒 Recent activity:"
@@ -315,9 +437,9 @@ show_analytics() {
 
 # ==================== AUTOMATION SYSTEM ====================
 
-# Setup macOS automation
+# Setup macOS automation with enhanced scheduling
 setup_automation() {
-    log "INFO" "Setting up automation..."
+    log "INFO" "Setting up enhanced automation with calendar integration..."
     
     local plist_file="$HOME/Library/LaunchAgents/com.journal.daily.plist"
     
@@ -344,6 +466,12 @@ setup_automation() {
         </dict>
         <dict>
             <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Hour</key>
             <integer>17</integer>
             <key>Minute</key>
             <integer>0</integer>
@@ -360,24 +488,36 @@ EOF
     launchctl unload "$plist_file" 2>/dev/null || true
     launchctl load "$plist_file"
     
-    log "SUCCESS" "Automation configured for 7:00 AM and 5:00 PM daily"
+    log "SUCCESS" "Enhanced automation configured for 7:00 AM (create), 9:00 AM (calendar), and 5:00 PM (all updates)"
 }
 
-# Automated execution
+# Enhanced automated execution with calendar integration
 run_automation() {
     local hour=$(date +%H)
     
-    if [[ "$hour" == "07" ]]; then
-        # Morning: Create journal
-        if [[ ! -f "$JOURNAL_FILE" ]]; then
-            generate_journal_template
-        fi
-    elif [[ "$hour" == "17" ]]; then
-        # Evening: Update Slack context
-        if [[ -f "$JOURNAL_FILE" ]]; then
-            update_slack_context
-        fi
-    fi
+    case "$hour" in
+        "07")
+            # Morning: Create journal
+            if [[ ! -f "$JOURNAL_FILE" ]]; then
+                generate_journal_template
+                log "INFO" "Morning automation: Journal created"
+            fi
+            ;;
+        "09")
+            # Mid-morning: Update calendar context
+            if [[ -f "$JOURNAL_FILE" ]]; then
+                update_calendar_context
+                log "INFO" "Mid-morning automation: Calendar context updated"
+            fi
+            ;;
+        "17")
+            # Evening: Update all contexts
+            if [[ -f "$JOURNAL_FILE" ]]; then
+                update_all_contexts
+                log "INFO" "Evening automation: All contexts updated"
+            fi
+            ;;
+    esac
 }
 
 # ==================== UTILITY FUNCTIONS ====================
@@ -419,37 +559,55 @@ cleanup() {
     log "SUCCESS" "Cleanup completed"
 }
 
-# Show help
+# Show enhanced help with calendar commands
 show_help() {
     cat << EOF
 ${CYAN}📝 Daily Work Journal v$VERSION${NC}
-Intelligent daily journaling with automation and analytics
+Intelligent daily journaling with Slack, Calendar, and automation
 
 ${YELLOW}USAGE:${NC}
   journal.sh [command] [options]
 
-${YELLOW}COMMANDS:${NC}
-  ${GREEN}create${NC}              Create today's journal
-  ${GREEN}open${NC}                Open journal in editor
-  ${GREEN}slack${NC}               Update Slack context
-  ${GREEN}complete${NC}            Mark Slack update as complete
-  ${GREEN}add <section> <text>${NC} Add timestamped entry to section
-  ${GREEN}analytics${NC}           Show journal analytics
-  ${GREEN}setup${NC}               Setup automation (7 AM & 5 PM)
-  ${GREEN}auto${NC}                Run automated tasks (used by scheduler)
-  ${GREEN}cleanup [days]${NC}      Clean up old files (default: 30 days)
-  ${GREEN}help${NC}                Show this help
+${YELLOW}CORE COMMANDS:${NC}
+  ${GREEN}create${NC}                    Create today's journal
+  ${GREEN}open${NC}                      Open journal in editor
+  ${GREEN}add <section> <text>${NC}       Add timestamped entry to section
+  ${GREEN}analytics${NC}                 Show journal analytics
+  ${GREEN}cleanup [days]${NC}            Clean up old files (default: 30 days)
+
+${YELLOW}INTEGRATION COMMANDS:${NC}
+  ${GREEN}slack${NC}                     Update Slack context
+  ${GREEN}calendar${NC}                  Update calendar context  
+  ${GREEN}update${NC}                    Update all contexts (Slack + Calendar)
+  ${GREEN}complete${NC}                  Mark Slack as complete
+  ${GREEN}cal-complete${NC}              Mark calendar as complete
+  ${GREEN}all-complete${NC}              Mark all integrations as complete
+
+${YELLOW}AUTOMATION:${NC}
+  ${GREEN}setup${NC}                     Setup automation (7 AM, 9 AM & 5 PM)
+  ${GREEN}auto${NC}                      Run automated tasks (used by scheduler)
+
+${YELLOW}HELP:${NC}
+  ${GREEN}help${NC}                      Show this help
 
 ${YELLOW}EXAMPLES:${NC}
-  journal.sh create                    # Create today's journal
-  journal.sh add "✅ Tasks" "Fixed bug" # Add timestamped entry
-  journal.sh slack                     # Update Slack section
-  journal.sh analytics                 # View statistics
-  journal.sh setup                     # Setup automation
+  journal.sh create                      # Create today's journal
+  journal.sh calendar                    # Update calendar section with MCP commands
+  journal.sh slack                       # Update Slack section with MCP commands
+  journal.sh update                      # Update both Slack and Calendar
+  journal.sh add "✅ Tasks" "Fixed bug"   # Add timestamped entry
+  journal.sh analytics                   # View statistics
+  journal.sh setup                       # Setup enhanced automation
 
 ${YELLOW}SECTIONS (for 'add' command):${NC}
-  "✅ Tasks"         "💻 Development"    "💬 Team"
-  "🧠 Learning"      "🎉 Wins"          "🔮 Tomorrow"
+  "📅 Calendar"      "✅ Tasks"         "💻 Development"    
+  "💬 Team"          "🧠 Learning"      "🎉 Wins"          
+  "🔮 Tomorrow"
+
+${YELLOW}AUTOMATION SCHEDULE:${NC}
+  • 07:00 - Create daily journal
+  • 09:00 - Update calendar context
+  • 17:00 - Update all contexts (Slack + Calendar)
 
 EOF
 }
@@ -469,8 +627,20 @@ main() {
         "slack"|"update-slack")
             update_slack_context
             ;;
+        "calendar"|"cal"|"update-calendar")
+            update_calendar_context
+            ;;
+        "update"|"update-all"|"all")
+            update_all_contexts
+            ;;
         "complete"|"mark-complete")
             mark_slack_complete
+            ;;
+        "cal-complete"|"calendar-complete")
+            mark_calendar_complete
+            ;;
+        "all-complete"|"mark-all-complete")
+            mark_all_complete
             ;;
         "add")
             [[ $# -lt 3 ]] && error_exit "Usage: journal.sh add <section> <text>"
